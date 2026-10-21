@@ -1,5 +1,7 @@
 # Model flow (v0.1.1)
 
+**Source:** `@uhero/feasim` v0.1.1 (https://github.com/UHERO/feasim, tag `v0.1.1`). **Last verified: October 21, 2026.**
+
 These steps are traced through `calcBill7Single` in `src/calculations/calc-bill7.ts`. The other pathways follow the same order, with their own envelope, unit and fee rules. Shared helpers are in `src/calculations/calc-shared.ts`.
 
 ## 0. Dispatch (`calcSingle`, `src/calculations/index.ts`)

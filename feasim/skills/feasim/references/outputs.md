@@ -1,5 +1,7 @@
 # Outputs (v0.1.1)
 
+**Source:** `@uhero/feasim` v0.1.1 (https://github.com/UHERO/feasim, tag `v0.1.1`). **Last verified: October 21, 2026.**
+
 Every function returns a `ParcelOutput` (full type in `dist/index.d.ts`). Money is in dollars and rates are fractions. When nothing can be built, the result is all zeros (`max_units: 0`).
 
 ## By group

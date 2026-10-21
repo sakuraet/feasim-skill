@@ -1,5 +1,7 @@
 # Inputs (v0.1.1)
 
+**Source:** `@uhero/feasim` v0.1.1 (https://github.com/UHERO/feasim, tag `v0.1.1`). **Last verified: October 21, 2026.**
+
 The full type is `SliderInputs` in `dist/index.d.ts` (source: `src/calculations/calc-shared.ts`). Only `program` is required.
 
 There are two layers of defaults:

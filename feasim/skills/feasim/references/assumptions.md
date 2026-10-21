@@ -1,5 +1,7 @@
 # Fixed assumptions (v0.1.1)
 
+**Source:** `@uhero/feasim` v0.1.1 (https://github.com/UHERO/feasim, tag `v0.1.1`). **Last verified: October 21, 2026.**
+
 These are constants in `src/calculations/calc-shared.ts` (and `DEFAULT_INPUTS` in `src/parcels.ts`). Users can't change the fixed ones without editing the code.
 
 | Constant | Value | Where | Basis (from code comments / docs) |

@@ -1,5 +1,7 @@
 # Pathways (v0.1.1)
 
+**Source:** `@uhero/feasim` v0.1.1 (https://github.com/UHERO/feasim, tag `v0.1.1`). **Last verified: October 21, 2026.**
+
 Envelope rules are in `src/parcels.ts` (`pathwayEnvelope`). The pro forma rules are in `src/calculations/calc-<program>.ts`. The ids are historical: `"bill6"` is current zoning and `"standard"` is the rules before Ord. 26-7.
 
 | | `bill6` (current zoning) | `standard` (pre-Ord. 26-7) | `bill7` (ROH ch. 32) | `h201` (HRS § 201H) | `tod` (ROH § 21-9.100) |

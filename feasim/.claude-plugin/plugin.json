@@ -1,0 +1,11 @@
+{
+  "name": "feasim",
+  "description": "Explains how UHERO's @uhero/feasim housing feasibility model works (v0.1.1): inputs, outputs, policy pathways, and why a parcel does or doesn't pencil.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Sakura Takahashi",
+    "url": "https://github.com/sakuraet"
+  },
+  "repository": "https://github.com/sakuraet/feasim-skill",
+  "license": "MIT"
+}

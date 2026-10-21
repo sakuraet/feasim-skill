@@ -1,14 +1,18 @@
 {
   "name": "feasim-skills",
-  "owner": { "name": "feasim-skill maintainers" },
+  "owner": {
+    "name": "Sakura Takahashi",
+    "url": "https://github.com/sakuraet"
+  },
   "metadata": {
     "description": "Claude skills for working with UHERO's @uhero/feasim housing feasibility model"
   },
   "plugins": [
     {
       "name": "feasim",
-      "source": "./plugins/feasim",
-      "description": "Explains how the @uhero/feasim housing feasibility package works (v0.1.1)"
+      "source": "./feasim",
+      "description": "Explains how UHERO's @uhero/feasim housing feasibility model works (v0.1.1): inputs, outputs, policy pathways, and why a parcel does or doesn't pencil.",
+      "version": "1.0.0"
     }
   ]
 }
