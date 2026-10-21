@@ -10,15 +10,14 @@ description: >-
   DEFAULT_INPUTS, overallLevel, rlv, dev_roc, ParcelOutput), or asks what the
   model says about a lot or pathway. Do NOT trigger on general Hawaii housing
   or real estate questions that don't name the model (housing prices, sales,
-  rents, permits); those are answered with the UHERO Data connector or the
-  hhdb skill instead.
+  rents, permits); the model holds no observed market data.
 ---
 
 # @uhero/feasim
 
 `@uhero/feasim` is UHERO's development feasibility model for housing on Oʻahu. Given a lot and a policy pathway, it works out what a developer could build, runs the pro forma (units, parking, costs, rents, financing, residual land value, returns) and gives a verdict: strong, marginal or poor.
 
-**Scope note:** This skill is for questions about the model: how it works, what it assumes, and what it returns. It is not a source of real market data. For observed prices, sales or rents, use the UHERO Data connector or the hhdb skill.
+**Scope note:** This skill is for questions about the model: how it works, what it assumes, and what it returns. It is not a source of real market data. For observed prices, sales or rents, say the model can't answer that rather than quoting its assumptions as market figures.
 
 Typical questions:
 

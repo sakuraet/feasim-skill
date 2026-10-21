@@ -80,7 +80,7 @@ You don't need to name the skill. Mention the model and Claude loads it on its o
 "How does the TOD pathway in feasim change FAR and height?"
 ```
 
-The skill only switches on when you refer to the model ("feasim", "the policy simulator", "the feasibility model", or one of its functions or results). General Hawaii housing questions, like home prices or rents, go to UHERO's data tools instead.
+The skill only switches on when you refer to the model ("feasim", "the policy simulator", "the feasibility model", or one of its functions or results). It doesn't switch on for general Hawaii housing questions, like home prices or rents, because the model doesn't contain real market data.
 
 ## Plugins in Detail
 
