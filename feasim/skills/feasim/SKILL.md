@@ -2,13 +2,13 @@
 name: feasim
 description: >-
   Explain and run UHERO's @uhero/feasim housing development feasibility model
-  (v0.3.0) for Oʻahu: its inputs, outputs, policy pathways (current zoning,
+  (v0.5.0) for Oʻahu: its inputs, outputs, policy pathways (current zoning,
   pre-Ord. 26-7, Bill 7, 201H, TOD), and why a parcel does or doesn't pencil.
   Use this skill ONLY when the user references the model, by saying "feasim",
   "@uhero/feasim", "the policy simulator", "the Housing Policy Simulator",
   "the feasibility model", or one of its functions or fields (calcParcel,
   calcSingle, parcelInputs, DEFAULT_INPUTS, overallLevel, rlv, dev_roc,
-  built_height, ParcelOutput), or asks what the model says about a lot or
+  built_height, sellingCosts, ParcelOutput), or asks what the model says about a lot or
   pathway. Do NOT trigger on general Hawaii housing or real estate questions
   that don't name the model (housing prices, sales, rents, permits); the model
   holds no observed market data.
@@ -31,13 +31,13 @@ Typical questions:
 
 ## Version check (do this first)
 
-This skill describes **v0.3.0**. If the user's project has the package installed, check the version with `npm ls @uhero/feasim`, or read the file `node_modules/@uhero/feasim/package.json` directly. Don't use `require("@uhero/feasim/package.json")`: the package's `exports` map blocks that path, so it throws `ERR_PACKAGE_PATH_NOT_EXPORTED`.
+This skill describes **v0.5.0**. If the user's project has the package installed, check the version with `npm ls @uhero/feasim`, or read the file `node_modules/@uhero/feasim/package.json` directly. Don't use `require("@uhero/feasim/package.json")`: the package's `exports` map blocks that path, so it throws `ERR_PACKAGE_PATH_NOT_EXPORTED`.
 
-If it isn't 0.3.0:
+If it isn't 0.5.0:
 
 - Tell the user the version differs.
 - Trust the package's README, types and `CHANGELOG.md` over this skill.
-- Expect numbers to move between versions even when the API doesn't. Releases change premiums, defaults and rules (0.2.x changed the Bill 7 grants and rent growth; 0.3.0 changed the parking and unit mix defaults and Bill 7's height and unit-cap handling).
+- Expect numbers to move between versions even when the API doesn't. Releases change premiums, defaults and rules (0.2.x changed the Bill 7 grants and rent growth; 0.3.0 changed the parking and unit mix defaults and Bill 7's height and unit-cap handling; 0.4.0 shipped test fixtures; 0.5.0 added the conveyance tax, the hold-length exit cap, the aging rent drag, the open-space bonus toggle, new parking defaults, 2026 income limits, and removed Bill 7's step-backs).
 
 ## Reference files
 
@@ -60,16 +60,16 @@ Primary sources, when the references aren't enough:
   - `docs/variables.md`: every lever and constant with its source, plus retired assumptions
   - `docs/pathways/<bill6|standard|bill7|tod|h201|special-districts>.md`: what each pathway changes, with the legal basis
 - **Changelog:** https://github.com/UHERO/feasim/blob/main/CHANGELOG.md
-- **Commented source:** https://github.com/UHERO/feasim at tag `v0.3.0`
+- **Commented source:** https://github.com/UHERO/feasim at tag `v0.5.0`. Read the tag, not `main`: `main` can hold unreleased changes.
 
-The npm package ships only `dist`, the README and the license.
+The npm package ships `dist`, the README, the license and two test fixtures (`test/data/*.json`, see `references/outputs.md`).
 
 ## How to operate
 
 **If you can run shell commands and Node.js 18+ is available:**
 
 1. Run the model rather than reasoning from memory.
-2. Install the package in a scratch folder, not in the user's project unless they ask: `npm install @uhero/feasim@0.3.0`.
+2. Install the package in a scratch folder, not in the user's project unless they ask: `npm install @uhero/feasim@0.5.0`.
 3. Write a short `.mjs` script and run it with `node`.
 4. Report the numbers it returns.
 
@@ -133,9 +133,9 @@ State alongside the numbers:
 Also flag known limits that affect the question:
 
 - For-sale units aren't active; every pathway is 100% rental.
-- In v0.3.0, current zoning, pre-Ord. 26-7 and TOD carry no affordable units.
-- Parking defaults are flat assumptions (0.95 stalls per unit; Bill 7 0.5; TOD 0.85), not legal minimums, and they apply on § 21-6.20(a) exempt parcels too.
-- Some code comments describe rules the code no longer applies, and `docs/pathways/bill7.md` says Bill 7 takes no height step-backs while the code applies the zone's. The code is authoritative.
+- In v0.5.0, current zoning, pre-Ord. 26-7 and TOD carry no affordable units.
+- Parking defaults are flat assumptions (0.95 stalls per unit; Bill 7 0.35; TOD and 201H 0.9), not legal minimums, and they apply on § 21-6.20(a) exempt parcels too.
+- Some numbers in the v0.5.0 README and `docs/pathways/bill7.md` worked example come from older versions (see `references/outputs.md` and `references/pathways.md`). Running the package is authoritative.
 
 ## Gotchas
 
@@ -148,7 +148,10 @@ Also flag known limits that affect the question:
 - **Bill 7's 60 ft cap is only a default:** `pathwayEnvelope` caps height at 60 ft, but a `height_limit` lever overrides it (to test buildings the law doesn't allow today). Bill 7 also stops building at its unit cap (`lot × FAR ÷ 800`), so it often uses less than FAR 4.0.
 - **Bill 7 grant amount:** `DEFAULT_INPUTS.bill7` has no `grant_amount`; the model picks $50,000 (pre) or $12,000 / $40 per sqft under 300 sqft (post) from `grant_type`. A `grant_amount` you pass applies to every unit.
 - **Timing:** permitting and construction default to 18 and 12 months for every pathway and zone (no zone lookup any more). `const_months: 0` is treated as unset and becomes 12.
-- **Open-space bonus:** where a zone offers one, `calcSingle` keeps whichever version (with or without the bonus) has the higher RLV.
+- **Open-space bonus:** where a zone offers one (B-2, BMX-3, BMX-4), `calcSingle` keeps whichever version has the higher RLV, unless `open_space_bonus_mode` is `"on"` or `"off"`. Check `open_space_bonus` on the result to see which was kept.
+- **Selling costs aren't a flat 3.5%:** `sellingCosts(price)` adds the HRS § 247-2 conveyance tax (up to 1% of the whole price), so `rlv_selling_costs` ≠ 3.5% of GDV.
+- **Hold length moves the exit cap:** `dev_exit_cap` = cap + 7.5 bps per hold year (max 75 bps), and market rents grow 3% (affordable 4%), so changing `hold_years` changes more than the timing.
+- **Fixture `grant_amount`:** the Bill 7 entry in `calculator-defaults.json` sets `grant_amount: 12000`; delete it before testing `pre_construct`, or the subsidy is $12,000 a unit.
 
 ## Answer format
 
@@ -159,8 +162,8 @@ Also flag known limits that affect the question:
 
 ## Maintenance
 
-- **Last verified:** November 9, 2026, against `@uhero/feasim` v0.3.0 (`v0.3.0` tag, the npm `latest`). Every identity in `references/outputs.md` was checked by running the package.
+- **Last verified:** November 17, 2026, against `@uhero/feasim` v0.5.0 (`v0.5.0` tag, the npm `latest`). Every identity in `references/outputs.md` was checked by running the package.
 - **When a new feasim version is released:**
-  1. Read `CHANGELOG.md` and diff the tags in the feasim repo (`git diff v0.3.0 <new tag> -- src README.md docs`).
+  1. Read `CHANGELOG.md` and diff the tags in the feasim repo (`git diff v0.5.0 <new tag> -- src README.md docs`).
   2. Update the references and the version lines.
   3. Bump `version` in `.claude-plugin/plugin.json` and in the root `marketplace.json`.

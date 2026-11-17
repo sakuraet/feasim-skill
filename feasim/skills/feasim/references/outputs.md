@@ -1,6 +1,6 @@
-# Outputs (v0.3.0)
+# Outputs (v0.5.0)
 
-**Source:** `@uhero/feasim` v0.3.0 (https://github.com/UHERO/feasim, tag `v0.3.0`). **Last verified: November 9, 2026.**
+**Source:** `@uhero/feasim` v0.5.0 (https://github.com/UHERO/feasim, tag `v0.5.0`). **Last verified: November 17, 2026.**
 
 Every function returns a `ParcelOutput` (full type in `dist/index.d.ts`). Money is in dollars and rates are fractions. When nothing can be built, the result is all zeros (`max_units: 0`, `rlv_land_carry: 1`).
 
@@ -21,7 +21,7 @@ Every function returns a `ParcelOutput` (full type in `dist/index.d.ts`). Money 
 | RLV | `rlv_selling_costs`, `rlv_project_cost`, `rlv_profit`, `rlv_land_carry`, `rlv_grants_pv`, `rlv`, `rlv_sqft` |
 | Returns | `dev_strategy` (`"dev_flip"` / `"hold"`), `dev_hold_years`, `dev_roc`, `dev_target_roc`, `dev_investment_spread` (ROC − cap rate), `dev_is_feasible` (ROC ≥ target), `dev_levered_irr`, `dev_equity_multiple`, `dev_profit`, `dev_roi` |
 | Deal | `dev_land_cost`, `dev_total_dev_cost` (dev cost + land + financing), `dev_capital_subsidy`, `dev_net_dev_cost`, `dev_equity_invested`, `dev_equity_out`, `dev_gdv`, `dev_selling_costs`, `dev_loan_payoff`, `dev_post_grant` |
-| Hold only | `dev_perm_principal`, `dev_perm_rate`, `dev_annual_debt_svc`, `dev_dscr`, `dev_is_bankable`, `dev_cash_on_cash`, `dev_entry_cap`, `dev_exit_cap` (entry + 0.5 points), `dev_yr1_prop_tax`. These are `null` for flips |
+| Hold only | `dev_perm_principal`, `dev_perm_rate`, `dev_annual_debt_svc`, `dev_dscr`, `dev_is_bankable`, `dev_cash_on_cash`, `dev_entry_cap`, `dev_exit_cap` (entry + 7.5 bps per hold year, max 75 bps), `dev_yr1_prop_tax`. These are `null` for flips |
 
 **Removed since v0.1.1:** `rlv_post_grant`. Grants now enter the RLV through `rlv_grants_pv`.
 
@@ -41,7 +41,8 @@ dev_net_dev_cost = dev_total_dev_cost − dev_capital_subsidy
 - `rlv_grants_pv` is each Bill 7 grant payment discounted at `target_return` from the month it is paid: the pre-construction subsidy evenly over the construction months, the post-construction grant when construction ends. It is 0 outside Bill 7.
 - `dev_capital_subsidy` is the Bill 7 grant total at face value, undiscounted, so ROC ignores grant timing.
 - `rlv` can differ between hold and flip. For a hold, the RLV-basis loan is also capped by the DSCR take-out, which changes `rlv_financing_cost`. A flip has no take-out.
-- Flip: `dev_equity_out` = GDV − 3.5% selling − loan payoff, plus any Bill 7 grants received. The equity multiple is `dev_equity_out` ÷ `dev_equity_invested`.
+- `rlv_selling_costs` = `sellingCosts(gdv)` = 3.5% of GDV + the conveyance tax on GDV. `dev_selling_costs` is the same on a flip; on a hold it is charged on the exit price, so it differs.
+- Flip: `dev_equity_out` = GDV − selling costs − loan payoff, plus any Bill 7 grants received. The equity multiple is `dev_equity_out` ÷ `dev_equity_invested`.
 - Hold: `dev_equity_out` = the sum of all positive monthly cash flows, including grants as paid and the reversion. `dev_profit` = that sum − equity.
 
 ## The verdict (`src/feasibility.ts`)
@@ -63,6 +64,17 @@ Per-metric functions: `rocLevel`, `rlvLevel`, `equityMultipleLevel`, `irrLevel`,
 
 **Reading ROC:** it is a ratio, so anything that shrinks cost can raise it. A shorter building can post a higher ROC than a taller one simply because it costs less. Levered IRR is the better metric for timing questions (permitting delay, construction length, lease-up, grant timing).
 
-## Reference run (v0.3.0 defaults)
+## Reference run (v0.5.0 defaults)
 
-`calcParcel("bill6", { lot_sqft: 20000, zone_class: "BMX-3", height: 150 })` returns 140 units, `dev_roc` 0.064, `rlv_sqft` 238.45 and `"strong"`, as in the package README. Use it to confirm an install behaves like v0.3.0.
+`calcParcel("bill6", { lot_sqft: 20000, zone_class: "BMX-3", height: 150 })` returns 140 units, `dev_roc` 0.0648 (target 0.066), `rlv_sqft` 244.96, equity multiple 2.87, levered IRR 11.6%, `open_space_bonus` 1 and `"marginal"` (ROC and IRR are marginal). Use it to confirm an install behaves like v0.5.0.
+
+The v0.5.0 README still shows the v0.3.0 result (0.064, 238.45, `"strong"`); it is out of date, so don't quote it.
+
+## Test fixtures (new in v0.4.0)
+
+The package ships two JSON fixtures for apps that test against the model:
+
+- `@uhero/feasim/test-data/calculator-defaults.json`: the calculator's default inputs, keyed by case (`"bill6"`, `"bill7 with retail"`, `"tod PD-T tier 2"`, …).
+- `@uhero/feasim/test-data/gauge-parcels.json`: 287 sample Oʻahu parcels (smallest, median and largest lot per zone) for each pathway.
+
+Import with `import d from "@uhero/feasim/test-data/calculator-defaults.json" with { type: "json" };`. They are for tests, and their contents change whenever the defaults change. The Bill 7 calculator defaults include `grant_amount: 12000`, so remove it before testing a pre-construction grant.
