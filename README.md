@@ -4,7 +4,7 @@ A [Claude Code plugin](https://code.claude.com/docs/en/plugins.md) that teaches 
 
 Once it's installed, you can ask Claude plain-language questions about the model, for example why a lot does or doesn't pencil under Bill 7. You don't need to read the code yourself.
 
-**Describes `@uhero/feasim` v0.3.0.**
+**Describes `@uhero/feasim` v0.5.0** (plugin version 1.2.0; see [Versions](#versions)).
 
 This is an unofficial community resource. It is not maintained by UHERO.
 
@@ -100,7 +100,7 @@ Guardrails built in:
 - **Read-only:** Claude never edits, commits to or publishes the feasim package. It sends change requests to the UHERO/feasim repo.
 - **No made-up numbers:** figures for a specific lot come from running the model. Hand calculations are labeled as such.
 - **Not an appraisal:** results are presented as a first-pass screen, not a property valuation or UHERO's official position.
-- **Version check:** Claude checks which feasim version you have. If it isn't v0.3.0, Claude says so and relies on the package's own docs.
+- **Version check:** Claude checks which feasim version you have. If it isn't v0.5.0, Claude says so and relies on the package's own docs.
 - **Caveats:** every answer states the version, the pathway, whether the run is a hold or a flip, and any assumptions you changed.
 
 What's inside:
@@ -120,11 +120,23 @@ feasim/
             └── assumptions.md ← fixed constants and where they come from
 ```
 
+## Versions
+
+The plugin has its own version number. Each plugin release describes one `@uhero/feasim` release:
+
+| Plugin | `@uhero/feasim` | Date |
+| --- | --- | --- |
+| 1.2.0 | 0.5.0 | November 17, 2026 |
+| 1.1.0 | 0.3.0 | November 9, 2026 |
+| 1.0.0 | 0.1.1 | |
+
+A new feasim release bumps the plugin's minor version (1.2.0 → 1.3.0). A fix to the skill's content alone bumps the patch version (1.2.0 → 1.2.1).
+
 ## Updating for a new feasim release
 
-1. Read the feasim `CHANGELOG.md` and compare the releases in the feasim repo, e.g. `git diff v0.3.0 v0.4.0 -- src README.md docs`.
-2. Update the affected files in `references/`, plus the version and "Last verified" lines in `SKILL.md` and each reference file.
-3. Bump `version` in `feasim/.claude-plugin/plugin.json` and in `.claude-plugin/marketplace.json`.
+1. Read the feasim `CHANGELOG.md` and compare the release tags in the feasim repo, e.g. `git diff v0.5.0 v0.6.0 -- src README.md docs package.json`. Compare tags, not `main`, which can hold unreleased changes.
+2. Update the affected files in `references/`, plus the version and "Last verified" lines in `SKILL.md` and each reference file. Rerun the reference run in `references/outputs.md` against the new version.
+3. Bump `version` in `feasim/.claude-plugin/plugin.json` and in `.claude-plugin/marketplace.json`, update the feasim version in both descriptions, and add a row to [Versions](#versions).
 4. Test locally with `claude --plugin-dir ./feasim`, and check the manifests with `claude plugin validate .`.
 
 ## License

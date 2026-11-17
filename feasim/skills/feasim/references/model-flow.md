@@ -1,13 +1,13 @@
-# Model flow (v0.3.0)
+# Model flow (v0.5.0)
 
-**Source:** `@uhero/feasim` v0.3.0 (https://github.com/UHERO/feasim, tag `v0.3.0`). **Last verified: November 9, 2026.**
+**Source:** `@uhero/feasim` v0.5.0 (https://github.com/UHERO/feasim, tag `v0.5.0`). **Last verified: November 17, 2026.**
 
-These steps are traced through `calcBill7Single` in `src/calculations/calc-bill7.ts`. The other pathways follow the same order, with their own envelope, unit and fee rules. Shared helpers are in `src/calculations/calc-shared.ts`. The narrative version, with legal citations, is `docs/simulator-logic.md` in the repo.
+These steps are traced through `calcBill7Single` in `src/calculations/calc-bill7.ts`. The other pathways follow the same order, with their own envelope, unit and fee rules; since v0.5.0 `bill6` and `standard` run one shared pipeline (`calc-far-pathway.ts`), and all four non-Bill 7 pathways share its hold/flip engine (`runDevFlipStrategy`, `runHoldStrategy`). Shared helpers are in `src/calculations/calc-shared.ts`. The narrative version, with legal citations, is `docs/simulator-logic.md` in the repo.
 
 ## 0. Dispatch (`calcSingle`, `src/calculations/index.ts`)
 
 - Picks the calculator from `program`.
-- If an open-space bonus is on offer (not Bill 7), it runs with and without the bonus. It keeps the higher RLV, or the bigger building when neither is positive.
+- If an open-space bonus is on offer (not Bill 7), it runs with and without the bonus. It keeps the higher RLV, or the bigger building when neither is positive. `open_space_bonus_mode` overrides this: `"auto"` (default) compares, `"on"` always takes the bonus, `"off"` never does.
 
 ## 1. Envelope and units
 
@@ -36,7 +36,7 @@ dev_cost       = hard_cost × 1.10 + soft_cost
 
 - **Waivable fees** (charged on the units set by `waivable_fee_basis`): building permit and plan review (scaled by hard cost per unit), wastewater, and the BWS water system facilities charge and meter (`calcWaterFees`).
 - **Every pathway:** environmental ($1,800), utilities ($245/unit), grubbing / grading / stockpiling (based on excavation volume), temporary occupancy, ESCP, and construction management at 3% of hard cost.
-- **Park dedication:** in-lieu = $200 + park land × `land_cost`.
+- **Park dedication:** in-lieu = $200 + park land × `land_cost`, where park land = min(110 sqft × chargeable units, 10% of floor area built, bonus included). Chargeable units are those not exempt under § 22-7.3(j): market units in 201H and Bill 7, every unit elsewhere.
 - **TOD only:** zoning application and special district fees.
 
 Parking cost: $190/sqft at 330 sqft/stall for structured parking; $30/sqft at 360 sqft/stall for surface. Bicycle racks and lockers cost $225 and $1,250 per space.
@@ -83,7 +83,8 @@ Property tax is `0.35% × (land + hard cost)`, or land only while an improvement
 
 ```
 gdv        = residential NOI / cap_rate + retail NOI / (cap_rate + 0.015)
-residual   = gdv × (1 − 0.035) − project_cost × 1.15
+selling    = sellingCosts(gdv) = 0.035 × gdv + conveyanceTax(gdv)
+residual   = gdv − selling − project_cost × 1.15
 land_carry = (1 + target_return)^(total_months/12)
 grants_pv  = Σ grant_flows[m] / (1 + target_return)^(m/12)
 rlv        = residual / land_carry + grants_pv
@@ -91,11 +92,13 @@ rlv        = residual / land_carry + grants_pv
 
 Here `project_cost` = `dev_cost` + `rlv_financing_cost`, and `rlv_sqft` = `rlv / lot_sqft`.
 
+**Conveyance tax** (`conveyanceTax`, HRS § 247-2, new in v0.5.0): the seller pays the bracket's rate on the whole price, not marginally. A whole rental building always takes the general schedule: 0.10% under $600k, 0.20% to $1M, 0.30% to $2M, 0.50% to $4M, 0.70% to $6M, 0.90% to $10M, 1.00% at $10M or more. So a $9.9M sale pays $89,100 and a $10M sale $100,000. The `condo_sfr` schedule (0.15–1.25%) exists but no pathway uses it.
+
 ## 7. Returns
 
 **Flip** (`hold_years = 0`):
 
-- Monthly cash flows: equity draws, grants as paid, then `gdv − 3.5% − loan payoff` at `total_months`.
+- Monthly cash flows: equity draws, grants as paid, then `gdv − sellingCosts(gdv) − loan payoff` at `total_months`.
 - `dev_levered_irr` is the monthly IRR, annualized (`solveIRR`).
 - Equity multiple = (exit proceeds + grants) ÷ equity.
 - ROC = NOI ÷ (total cost incl. land and financing − grants at face value).
@@ -103,6 +106,8 @@ Here `project_cost` = `dev_cost` + `rlv_financing_cost`, and `rlv_sqft` = `rlv /
 **Hold:**
 
 - **Permanent loan** (`calcPermanentLoan`): min(construction balance, DSCR-sized loan on year-1 NOI after tax).
-- **Growth each year:** rent 4% (affordable and market), opex 3.5%, assessed value 2%.
-- **Exit:** year-`hold_years` forward NOI ÷ (cap + 0.5 points), minus 3.5% and the remaining loan balance.
+- **Growth each year** (`holdEgi`): affordable rent income 4%; market rent, parking and retail 3% (4% less the 1% aging drag, `HOLD.age_rent_drag`); opex 3.5%; assessed value 2%.
+- **Exit cap** (`exitCapRate`): entry cap + 7.5 bps per year held, capped at 75 bps (10+ years). At 5.1%: 1 yr 5.175%, 5 yr 5.475%, 8 yr 5.70%, 10+ yr 5.85%.
+- **Exit:** forward NOI (grown at the next year's `holdEgi` growth) ÷ exit cap, minus `sellingCosts` on that price and the remaining loan balance.
+- **IRR** (`solveIRR`): bisection; below 0% it tests the sign on future value, so long holds and very large parcels no longer return `NaN` from overflow.
 - **Cash multiple:** equity multiple = the sum of positive monthly flows ÷ equity.
